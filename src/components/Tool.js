@@ -6,8 +6,12 @@ import { getExt, download } from '../utils';
 import { file2sub, sub2vtt, sub2srt, sub2txt } from '../libs/readSub';
 import sub2ass from '../libs/readSub/sub2ass';
 import googleTranslate from '../libs/googleTranslate';
-import FFmpeg from '@ffmpeg/ffmpeg';
+import { createFFmpeg, fetchFile } from '@ffmpeg/ffmpeg';
 import SimpleFS from '@forlagshuset/simple-fs';
+
+// 全局FFmpeg实例，避免重复加载WASM资源
+let globalFFmpeg = null;
+let ffmpegLoaded = false;
 
 const Style = styled.div`
     display: flex;
@@ -237,7 +241,6 @@ const Style = styled.div`
     }
 `;
 
-FFmpeg.createFFmpeg({ log: true }).load();
 const fs = new SimpleFS.FileSystem();
 
 export default function Header({
@@ -257,14 +260,30 @@ export default function Header({
     const [translate, setTranslate] = useState('en');
     const [videoFile, setVideoFile] = useState(null);
 
+    // 获取FFmpeg实例的辅助函数
+    const getFFmpegInstance = useCallback(async () => {
+        if (!globalFFmpeg) {
+            // 创建全局FFmpeg实例，配置corePath
+            globalFFmpeg = createFFmpeg({
+                log: true,
+                corePath: 'https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js'
+            });
+        }
+        
+        if (!ffmpegLoaded) {
+            setLoading(t('LOADING_FFMPEG'));
+            await globalFFmpeg.load();
+            ffmpegLoaded = true;
+        }
+        
+        return globalFFmpeg;
+    }, [setLoading]);
+
     const decodeAudioData = useCallback(
         async (file) => {
-            try {
-                const { createFFmpeg, fetchFile } = FFmpeg;
-                const ffmpeg = createFFmpeg({ log: true });
+            try {     
+                const ffmpeg = await getFFmpegInstance();
                 ffmpeg.setProgress(({ ratio }) => setProcessing(ratio * 100));
-                setLoading(t('LOADING_FFMPEG'));
-                await ffmpeg.load();
                 ffmpeg.FS('writeFile', file.name, await fetchFile(file));
                 setLoading('');
                 notify({
@@ -292,16 +311,13 @@ export default function Header({
                 });
             }
         },
-        [waveform, notify, setProcessing, setLoading],
+        [waveform, notify, setProcessing, setLoading, getFFmpegInstance],
     );
 
     const burnSubtitles = useCallback(async () => {
         try {
-            const { createFFmpeg, fetchFile } = FFmpeg;
-            const ffmpeg = createFFmpeg({ log: true });
+            const ffmpeg = await getFFmpegInstance();
             ffmpeg.setProgress(({ ratio }) => setProcessing(ratio * 100));
-            setLoading(t('LOADING_FFMPEG'));
-            await ffmpeg.load();
             setLoading(t('LOADING_FONT'));
 
             await fs.mkdir('/fonts');
@@ -355,7 +371,7 @@ export default function Header({
                 level: 'error',
             });
         }
-    }, [notify, setProcessing, setLoading, videoFile, subtitle]);
+    }, [notify, setProcessing, setLoading, videoFile, subtitle, getFFmpegInstance]);
 
     const onVideoChange = useCallback(
         (event) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import NotificationSystem from 'react-notification-system';
+import { ReactNotifications, Store } from 'react-notifications-component';
 import DT from 'duration-time-conversion';
 import isEqual from 'lodash/isEqual';
 import styled from 'styled-components';
@@ -40,7 +40,6 @@ const Style = styled.div`
 
 export default function App({ defaultLang }) {
     const subtitleHistory = useRef([]);
-    const notificationSystem = useRef(null);
     const [player, setPlayer] = useState(null);
     const [loading, setLoading] = useState('');
     const [processing, setProcessing] = useState(0);
@@ -106,18 +105,22 @@ export default function App({ defaultLang }) {
 
     const notify = useCallback(
         (obj) => {
-            // https://github.com/igorprado/react-notification-system
-            const notification = notificationSystem.current;
-            notification.clearNotifications();
-            notification.addNotification({
-                position: 'tc',
-                dismissible: 'none',
-                autoDismiss: 2,
+            // 使用react-notifications-component
+            Store.addNotification({
+                title: '',
                 message: obj.message,
-                level: obj.level,
+                type: obj.level || 'info',
+                insert: 'top',
+                container: 'top-center',
+                animationIn: ['fadeIn'],
+                animationOut: ['fadeOut'],
+                dismiss: {
+                    duration: 2000,
+                    showIcon: true
+                }
             });
         },
-        [notificationSystem],
+        [],
     );
 
     const removeSub = useCallback(
@@ -315,7 +318,7 @@ export default function App({ defaultLang }) {
             <Footer {...props} />
             {loading ? <Loading loading={loading} /> : null}
             {processing > 0 && processing < 100 ? <ProgressBar processing={processing} /> : null}
-            <NotificationSystem ref={notificationSystem} allowHTML={true} />
+            <ReactNotifications />
         </Style>
     );
 }

@@ -29,7 +29,7 @@ const Style = styled.div`
     }
 `;
 
-export default function Component({ processing }) {
+export default function ProgressBar({ processing }) {
     return (
         <Style>
             <div className="inner" style={{ width: `${processing}%` }}>
