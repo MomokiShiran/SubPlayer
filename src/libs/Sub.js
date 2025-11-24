@@ -18,7 +18,9 @@ export default class Sub {
     }
 
     get startTime() {
-        return DT.t2d(this.start);
+        const time = DT.t2d(this.start);
+        // 检查是否为有效数字
+        return !isNaN(time) && isFinite(time) ? time : -1;
     }
 
     set startTime(time) {
@@ -26,7 +28,9 @@ export default class Sub {
     }
 
     get endTime() {
-        return DT.t2d(this.end);
+        const time = DT.t2d(this.end);
+        // 检查是否为有效数字
+        return !isNaN(time) && isFinite(time) ? time : -1;
     }
 
     set endTime(time) {
