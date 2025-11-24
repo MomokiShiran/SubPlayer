@@ -1,6 +1,4 @@
-import { ContextMenu, MenuItem, ContextMenuTrigger } from 'react-contextmenu';
 import React, { useEffect, useCallback } from 'react';
-import { Translate } from 'react-i18nify';
 import styled from 'styled-components';
 import isEqual from 'lodash/isEqual';
 import DT from 'duration-time-conversion';
@@ -17,17 +15,6 @@ const Timeline = styled.div`
     height: 100%;
     pointer-events: none;
 
-    .react-contextmenu-wrapper {
-        position: absolute;
-        z-index: 9;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: all;
-    }
 
     .sub-item {
         position: absolute;
@@ -309,7 +296,7 @@ export default React.memo(
                                 }}
                                 onDoubleClick={(event) => onDoubleClick(sub, event)}
                             >
-                                <ContextMenuTrigger id="contextmenu" holdToDisplay={-1}>
+                                <div>
                                     <div
                                         className="sub-handle"
                                         style={{
@@ -338,19 +325,11 @@ export default React.memo(
                                         onMouseDown={(event) => onMouseDown(sub, event, 'right')}
                                     ></div>
                                     <div className="sub-duration">{sub.duration}</div>
-                                </ContextMenuTrigger>
+                                </div>
                             </div>
                         );
                     })}
                 </div>
-                <ContextMenu id="contextmenu">
-                    <MenuItem onClick={() => removeSub(lastSub)}>
-                        <Translate value="DELETE" />
-                    </MenuItem>
-                    <MenuItem onClick={() => mergeSub(lastSub)}>
-                        <Translate value="MERGE" />
-                    </MenuItem>
-                </ContextMenu>
             </Timeline>
         );
     },
