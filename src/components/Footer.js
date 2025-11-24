@@ -133,7 +133,7 @@ const Waveform = memo(
                 rulerColor: 'rgba(255, 255, 255, 0.5)',
                 paddingColor: 'rgba(0, 0, 0, 0)',
             });
-
+            
             waveformRef.current = waveform;
 
             setWaveform(waveform);
@@ -146,7 +146,7 @@ const Waveform = memo(
                     waveformRef.current = null;
                 }
             };
-        }, [player, $waveform, setWaveform, setRender]);
+        }, [player, $waveform, setWaveform, setRender, waveformRef]);
 
         return <div className="waveform" ref={$waveform} />;
     },
