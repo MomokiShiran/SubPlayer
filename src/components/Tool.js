@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import languages from '../libs/languages';
 import { t, Translate } from 'react-i18nify';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { getExt, download } from '../utils';
 import { file2sub, sub2vtt, sub2srt, sub2txt } from '../libs/readSub';
 import sub2ass from '../libs/readSub/sub2ass';
@@ -9,9 +9,7 @@ import googleTranslate from '../libs/googleTranslate';
 import { createFFmpeg, fetchFile } from '@ffmpeg/ffmpeg';
 import SimpleFS from '@forlagshuset/simple-fs';
 
-// 全局FFmpeg实例，避免重复加载WASM资源
-let globalFFmpeg = null;
-let ffmpegLoaded = false;
+// 注意：已删除全局变量，改用组件内useRef存储
 
 const Style = styled.div`
     display: flex;
@@ -259,30 +257,37 @@ export default function Header({
 }) {
     const [translate, setTranslate] = useState('en');
     const [videoFile, setVideoFile] = useState(null);
+    
+    // 使用useRef存储FFmpeg实例和加载状态，确保组件内状态隔离
+    const ffmpegRef = useRef(null);
+    const ffmpegLoadedRef = useRef(false);
 
     // 获取FFmpeg实例的辅助函数
     const getFFmpegInstance = useCallback(async () => {
-        if (!globalFFmpeg) {
-            // 创建全局FFmpeg实例，配置corePath
-            globalFFmpeg = createFFmpeg({
+        if (!ffmpegRef.current) {
+            // 创建FFmpeg实例，配置corePath
+            ffmpegRef.current = createFFmpeg({
                 log: true,
                 corePath: 'https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js'
             });
         }
         
-        if (!ffmpegLoaded) {
+        if (!ffmpegLoadedRef.current) {
             setLoading(t('LOADING_FFMPEG'));
-            await globalFFmpeg.load();
-            ffmpegLoaded = true;
+            await ffmpegRef.current.load();
+            ffmpegLoadedRef.current = true;
         }
         
-        return globalFFmpeg;
+        return ffmpegRef.current;
     }, [setLoading]);
 
     const decodeAudioData = useCallback(
         async (file) => {
+            let ffmpeg = null;
+            const output = `${Date.now()}.mp3`;
+            
             try {     
-                const ffmpeg = await getFFmpegInstance();
+                ffmpeg = await getFFmpegInstance();
                 ffmpeg.setProgress(({ ratio }) => setProcessing(ratio * 100));
                 ffmpeg.FS('writeFile', file.name, await fetchFile(file));
                 setLoading('');
@@ -290,7 +295,6 @@ export default function Header({
                     message: t('DECODE_START'),
                     level: 'info',
                 });
-                const output = `${Date.now()}.mp3`;
                 await ffmpeg.run('-i', file.name, '-ac', '1', '-ar', '8000', output);
                 const uint8 = ffmpeg.FS('readFile', output);
                 // download(URL.createObjectURL(new Blob([uint8])), `${output}`);
@@ -309,14 +313,33 @@ export default function Header({
                     message: t('DECODE_ERROR'),
                     level: 'error',
                 });
+            } finally {
+                if (ffmpeg) {
+                    try {
+                        if (ffmpeg.FS('readdir', '.').includes(file.name)) {
+                            ffmpeg.FS('unlink', file.name);
+                        }
+                        if (ffmpeg.FS('readdir', '.').includes(output)) {
+                            ffmpeg.FS('unlink', output);
+                        }
+                    } catch (cleanupError) {
+                        console.warn('清理临时文件时出错:', cleanupError);
+                    }
+                }
             }
         },
         [waveform, notify, setProcessing, setLoading, getFFmpegInstance],
     );
 
     const burnSubtitles = useCallback(async () => {
+        let ffmpeg = null;
+        let output = null;
+        let subtitleFileName = null;
+        let videoFileName = null;
+        let fontFileName = 'tmp/Microsoft-YaHei.ttf';
+        
         try {
-            const ffmpeg = await getFFmpegInstance();
+            ffmpeg = await getFFmpegInstance();
             ffmpeg.setProgress(({ ratio }) => setProcessing(ratio * 100));
             setLoading(t('LOADING_FONT'));
 
@@ -324,37 +347,43 @@ export default function Header({
             const fontExist = await fs.exists('/fonts/Microsoft-YaHei.ttf');
             if (fontExist) {
                 const fontBlob = await fs.readFile('/fonts/Microsoft-YaHei.ttf');
-                ffmpeg.FS('writeFile', `tmp/Microsoft-YaHei.ttf`, await fetchFile(fontBlob));
+                ffmpeg.FS('writeFile', fontFileName, await fetchFile(fontBlob));
             } else {
                 const fontUrl = 'https://cdn.jsdelivr.net/gh/zhw2590582/SubPlayer/docs/Microsoft-YaHei.ttf';
                 const fontBlob = await fetch(fontUrl).then((res) => res.blob());
                 await fs.writeFile('/fonts/Microsoft-YaHei.ttf', fontBlob);
-                ffmpeg.FS('writeFile', `tmp/Microsoft-YaHei.ttf`, await fetchFile(fontBlob));
+                ffmpeg.FS('writeFile', fontFileName, await fetchFile(fontBlob));
             }
+            
             setLoading(t('LOADING_VIDEO'));
+            videoFileName = videoFile ? videoFile.name : 'sample.mp4';
             ffmpeg.FS(
                 'writeFile',
-                videoFile ? videoFile.name : 'sample.mp4',
+                videoFileName,
                 await fetchFile(videoFile || 'sample.mp4'),
             );
+            
             setLoading(t('LOADING_SUB'));
-            const subtitleFile = new File([new Blob([sub2ass(subtitle)])], 'subtitle.ass');
-            ffmpeg.FS('writeFile', subtitleFile.name, await fetchFile(subtitleFile));
+            subtitleFileName = 'subtitle.ass';
+            const subtitleContent = sub2ass(subtitle);
+            ffmpeg.FS('writeFile', subtitleFileName, await fetchFile(new File([subtitleContent], subtitleFileName)));
             setLoading('');
             notify({
                 message: t('BURN_START'),
                 level: 'info',
             });
-            const output = `${Date.now()}.mp4`;
+            
+            output = `${Date.now()}.mp4`;
             await ffmpeg.run(
                 '-i',
-                videoFile ? videoFile.name : 'sample.mp4',
+                videoFileName,
                 '-vf',
-                `ass=${subtitleFile.name}:fontsdir=/tmp`,
+                `ass=${subtitleFileName}:fontsdir=/tmp`,
                 '-preset',
                 videoFile ? 'fast' : 'ultrafast',
                 output,
             );
+            
             const uint8 = ffmpeg.FS('readFile', output);
             download(URL.createObjectURL(new Blob([uint8])), `${output}`);
             setProcessing(0);
@@ -370,6 +399,38 @@ export default function Header({
                 message: t('BURN_ERROR'),
                 level: 'error',
             });
+        } finally {
+            if (ffmpeg) {
+                try {
+                    if (!ffmpeg.FS('readdir', '/').includes('tmp')) {
+                        ffmpeg.FS('mkdir', '/tmp');
+                    }
+                    
+                    const cleanupFiles = [output, subtitleFileName, videoFileName];
+                    const currentDirFiles = ffmpeg.FS('readdir', '.');
+                    const tmpDirFiles = ffmpeg.FS('readdir', '/tmp');
+                    
+                    cleanupFiles.forEach(file => {
+                        if (file && currentDirFiles.includes(file)) {
+                            try {
+                                ffmpeg.FS('unlink', file);
+                            } catch (e) {
+                                console.warn(`清理文件 ${file} 失败:`, e);
+                            }
+                        }
+                    });
+                    
+                    if (fontFileName && tmpDirFiles.includes('Microsoft-YaHei.ttf')) {
+                        try {
+                            ffmpeg.FS('unlink', fontFileName);
+                        } catch (e) {
+                            console.warn(`清理字体文件失败:`, e);
+                        }
+                    }
+                } catch (cleanupError) {
+                    console.warn('清理临时文件时出错:', cleanupError);
+                }
+            }
         }
     }, [notify, setProcessing, setLoading, videoFile, subtitle, getFFmpegInstance]);
 
