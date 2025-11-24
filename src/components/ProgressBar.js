@@ -30,10 +30,11 @@ const Style = styled.div`
 `;
 
 export default function ProgressBar({ processing }) {
+    const clampedProgress = Math.max(0, Math.min(100, processing));
     return (
         <Style>
-            <div className="inner" style={{ width: `${processing}%` }}>
-                <span>{`${processing.toFixed(2)}%`}</span>
+            <div className="inner" style={{ width: `${clampedProgress}%` }}>
+                <span>{`${clampedProgress.toFixed(2)}%`}</span>
             </div>
         </Style>
     );
