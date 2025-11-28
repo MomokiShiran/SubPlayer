@@ -40,7 +40,7 @@ const Style = styled.div`
             cursor: pointer;
             font-size: 13px;
             background-color: #3f51b5;
-            transition: all 0.2s ease 0s;
+            transition: opacity 0.2s ease 0s;
 
             &:hover {
                 opacity: 1;
@@ -78,7 +78,7 @@ const Style = styled.div`
             cursor: pointer;
             font-size: 13px;
             background-color: #673ab7;
-            transition: all 0.2s ease 0s;
+            transition: opacity 0.2s ease 0s;
 
             &:hover {
                 opacity: 1;
@@ -105,7 +105,7 @@ const Style = styled.div`
             cursor: pointer;
             font-size: 13px;
             background-color: #009688;
-            transition: all 0.2s ease 0s;
+            transition: opacity 0.2s ease 0s;
 
             &:hover {
                 opacity: 1;
@@ -132,7 +132,7 @@ const Style = styled.div`
             cursor: pointer;
             font-size: 13px;
             background-color: #009688;
-            transition: all 0.2s ease 0s;
+            transition: opacity 0.2s ease 0s;
 
             &:hover {
                 opacity: 1;
@@ -165,7 +165,7 @@ const Style = styled.div`
             cursor: pointer;
             font-size: 13px;
             background-color: #673ab7;
-            transition: all 0.2s ease 0s;
+            transition: opacity 0.2s ease 0s;
 
             &:hover {
                 opacity: 1;
@@ -234,7 +234,7 @@ const Style = styled.div`
             width: 0;
             height: 100%;
             background-color: #ff9800;
-            transition: all 0.2s ease 0s;
+            transition: width 0.2s ease 0s;
         }
     }
 `;

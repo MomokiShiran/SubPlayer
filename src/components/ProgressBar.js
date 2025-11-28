@@ -16,7 +16,7 @@ const Style = styled.div`
         position: relative;
         height: 100%;
         background-color: #f00;
-        transition: all 0.3s ease 0s;
+        transition: width 0.2s ease 0s;
         span {
             position: absolute;
             top: 3px;

@@ -29,7 +29,7 @@ const Style = styled.div`
                     text-align: center;
                     background-color: rgba(255, 255, 255, 0.05);
                     border: 1px solid rgba(255, 255, 255, 0.1);
-                    transition: all 0.2s ease;
+                    transition: background-color 0.2s ease, border-color 0.2s ease;
                     resize: none;
                     outline: none;
 

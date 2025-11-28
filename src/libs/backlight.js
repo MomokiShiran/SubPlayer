@@ -50,7 +50,7 @@ function creatMatrix(parent) {
         $box.style.width = `${100 / x}%`;
         $box.style.height = `${100 / y}%`;
         $box.style.borderRadius = '50%';
-        $box.style.transition = 'all .2s ease';
+        $box.style.transition = 'box-shadow 0.2s ease';
         parent.appendChild($box);
         return {
             $box,
