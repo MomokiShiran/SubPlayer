@@ -15,7 +15,7 @@ function matrixCallback(callback) {
 }
 
 function getColors($canvas, $video, width, height) {
-    const ctx = $canvas.getContext('2d');
+    const ctx = $canvas.getContext('2d', { willReadFrequently: true });
     $canvas.width = width;
     $canvas.height = height;
     ctx.drawImage($video, 0, 0);
