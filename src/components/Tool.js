@@ -555,11 +555,11 @@ export default function Header({
                 <div className="import">
                     <div className="btn">
                         <Translate value="OPEN_VIDEO" />
-                        <input className="file" type="file" onChange={onVideoChange} onClick={onInputClick} />
+                        <input className="file" type="file" id="video-upload" name="video-upload" onChange={onVideoChange} onClick={onInputClick} />
                     </div>
                     <div className="btn">
                         <Translate value="OPEN_SUB" />
-                        <input className="file" type="file" onChange={onSubtitleChange} onClick={onInputClick} />
+                        <input className="file" type="file" id="subtitle-upload" name="subtitle-upload" onChange={onSubtitleChange} onClick={onInputClick} />
                     </div>
                 </div>
                 {window.crossOriginIsolated ? (
@@ -597,7 +597,7 @@ export default function Header({
                     </div>
                 </div>
                 <div className="translate">
-                    <select value={translate} onChange={(event) => setTranslate(event.target.value)}>
+                    <select id="translate-select" name="translate-select" value={translate} onChange={(event) => setTranslate(event.target.value)}>
                         {(languages[language] || languages.en).map((item) => (
                             <option key={item.key} value={item.key}>
                                 {item.name}

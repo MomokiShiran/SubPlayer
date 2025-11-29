@@ -1,6 +1,4 @@
-import React, { useState, useEffect, createRef, useCallback, useMemo, memo } from 'react';
-import TextareaAutosize from 'react-textarea-autosize';
-import { Translate } from 'react-i18nify';
+import React, { useEffect, createRef, memo, useCallback} from 'react';
 import styled from 'styled-components';
 import backlight from '../libs/backlight';
 import { isPlaying } from '../utils';
@@ -61,23 +59,16 @@ const Style = styled.div`
 
             .textarea {
                 width: 100%;
-                outline: none;
-                resize: none;
                 text-align: center;
                 line-height: 1.2;
-                border: none;
                 color: #fff;
                 font-size: 20px;
                 padding: 5px 10px;
-                user-select: all;
-                pointer-events: all;
+                user-select: none;
+                pointer-events: none;
                 background-color: rgb(0 0 0 / 0);
                 text-shadow: rgb(0 0 0) 1px 0px 1px, rgb(0 0 0) 0px 1px 1px, rgb(0 0 0) -1px 0px 1px,
                     rgb(0 0 0) 0px -1px 1px;
-
-                &.pause {
-                    background-color: rgb(0 0 0 / 50%);
-                }
             }
         }
     }
@@ -116,9 +107,6 @@ const VideoWrap = memo(
 );
 
 export default function Player(props) {
-    const [currentSub, setCurrentSub] = useState(null);
-    const [focusing, setFocusing] = useState(false);
-    const [inputItemCursor, setInputItemCursor] = useState(0);
     const $player = createRef();
 
     useEffect(() => {
@@ -128,67 +116,15 @@ export default function Player(props) {
         }
     }, [$player, props.player]);
 
-    useMemo(() => {
-        setCurrentSub(props.subtitle[props.currentIndex]);
-    }, [props.subtitle, props.currentIndex]);
-
-    const onChange = useCallback(
-        (event) => {
-            props.player.pause();
-            props.updateSub(currentSub, { text: event.target.value });
-            if (event.target.selectionStart) {
-                setInputItemCursor(event.target.selectionStart);
-            }
-        },
-        [props, currentSub],
-    );
-
-    const onClick = useCallback(
-        (event) => {
-            props.player.pause();
-            if (event.target.selectionStart) {
-                setInputItemCursor(event.target.selectionStart);
-            }
-        },
-        [props],
-    );
-
-    const onFocus = useCallback((event) => {
-        setFocusing(true);
-        if (event.target.selectionStart) {
-            setInputItemCursor(event.target.selectionStart);
-        }
-    }, []);
-
-    const onBlur = useCallback(() => {
-        setTimeout(() => setFocusing(false), 500);
-    }, []);
-
-    const onSplit = useCallback(() => {
-        props.splitSub(currentSub, inputItemCursor);
-    }, [props, currentSub, inputItemCursor]);
-
     return (
         <Style className="player">
             <div className="video" ref={$player}>
                 <VideoWrap {...props} />
-                {props.player && currentSub ? (
+                {props.player && props.subtitle[props.currentIndex] ? (
                     <div className="subtitle">
-                        {focusing ? (
-                            <div className="operate" onClick={onSplit}>
-                                <Translate value="SPLIT" />
-                            </div>
-                        ) : null}
-                        <TextareaAutosize
-                            className={`textarea ${!props.playing ? 'pause' : ''}`}
-                            value={currentSub.text}
-                            onChange={onChange}
-                            onClick={onClick}
-                            onFocus={onFocus}
-                            onBlur={onBlur}
-                            onKeyDown={onFocus}
-                            spellCheck={false}
-                        />
+                        <div className={`textarea`}>
+                            {props.subtitle[props.currentIndex].text}
+                        </div>
                     </div>
                 ) : null}
             </div>
