@@ -16,22 +16,49 @@ const Style = styled.div`
 
         .ReactVirtualized__Table__row {
             .item {
-                height: 100%;
-                padding: 5px;
-
-                .textarea {
-                    border: none;
-                    width: 100%;
                     height: 100%;
-                    color: #fff;
-                    font-size: 12px;
-                    padding: 10px;
-                    text-align: center;
-                    background-color: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    transition: background-color 0.2s ease, border-color 0.2s ease;
-                    resize: none;
-                    outline: none;
+                    padding: 5px;
+                    display: flex;
+                    gap: 5px;
+
+                    .time-container {
+                        width: 70px;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
+                        gap: 2px;
+                    }
+
+                    .time {
+                        color: rgba(255, 255, 255, 0.7);
+                        font-size: 12px;
+                        text-align: center;
+                        user-select: none;
+                        transition: color 0.2s ease;
+                    }
+
+                    &.highlight .time {
+                        color: rgba(255, 255, 255, 0.9);
+                    }
+
+                    &.illegal .time {
+                        color: rgba(255, 100, 100, 0.9);
+                    }
+
+                    .textarea {
+                        border: none;
+                        width: 100%;
+                        height: 100%;
+                        color: #fff;
+                        font-size: 12px;
+                        padding: 10px;
+                        text-align: center;
+                        background-color: rgba(255, 255, 255, 0.05);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        transition: background-color 0.2s ease, border-color 0.2s ease;
+                        resize: none;
+                        outline: none;
 
                     &.highlight {
                         background-color: rgb(0 87 158);
@@ -91,6 +118,10 @@ export default function Subtitles({ currentIndex, subtitle, checkSub, player, up
                             }}
                         >
                             <div className="item">
+                                <div className="time-container">
+                                    <div className="time start-time">{props.rowData.start}</div>
+                                    <div className="time end-time">{props.rowData.end}</div>
+                                </div>
                                 <textarea
                                     maxLength={200}
                                     spellCheck={false}
