@@ -6,10 +6,8 @@ import { getExt, download } from '../utils';
 import { file2sub, sub2vtt, sub2srt, sub2txt } from '../libs/readSub';
 import sub2ass from '../libs/readSub/sub2ass';
 import googleTranslate from '../libs/googleTranslate';
-import { createFFmpeg, fetchFile } from '@ffmpeg/ffmpeg';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
 import SimpleFS from '@forlagshuset/simple-fs';
-
-// 注意：已删除全局变量，改用组件内useRef存储
 
 const Style = styled.div`
     display: flex;
@@ -266,15 +264,14 @@ export default function Header({
     const getFFmpegInstance = useCallback(async () => {
         if (!ffmpegRef.current) {
             // 创建FFmpeg实例，配置corePath
-            ffmpegRef.current = createFFmpeg({
-                log: true,
-                corePath: 'https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js'
-            });
+            ffmpegRef.current = new FFmpeg();
         }
         
         if (!ffmpegLoadedRef.current) {
             setLoading(t('LOADING_FFMPEG'));
-            await ffmpegRef.current.load();
+            await ffmpegRef.current.load({
+                corePath: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/ffmpeg-core.js'
+            });
             ffmpegLoadedRef.current = true;
         }
         
@@ -289,7 +286,7 @@ export default function Header({
             try {     
                 ffmpeg = await getFFmpegInstance();
                 ffmpeg.setProgress(({ ratio }) => setProcessing(ratio * 100));
-                ffmpeg.FS('writeFile', file.name, await fetchFile(file));
+                ffmpeg.FS('writeFile', file.name, new Uint8Array(await file.arrayBuffer()));
                 setLoading('');
                 notify({
                     message: t('DECODE_START'),
@@ -347,12 +344,12 @@ export default function Header({
             const fontExist = await fs.exists('/fonts/Microsoft-YaHei.ttf');
             if (fontExist) {
                 const fontBlob = await fs.readFile('/fonts/Microsoft-YaHei.ttf');
-                ffmpeg.FS('writeFile', fontFileName, await fetchFile(fontBlob));
+                ffmpeg.FS('writeFile', fontFileName, new Uint8Array(await fontBlob.arrayBuffer()));
             } else {
                 const fontUrl = 'https://cdn.jsdelivr.net/gh/zhw2590582/SubPlayer/docs/Microsoft-YaHei.ttf';
                 const fontBlob = await fetch(fontUrl).then((res) => res.blob());
                 await fs.writeFile('/fonts/Microsoft-YaHei.ttf', fontBlob);
-                ffmpeg.FS('writeFile', fontFileName, await fetchFile(fontBlob));
+                ffmpeg.FS('writeFile', fontFileName, new Uint8Array(await fontBlob.arrayBuffer()));
             }
             
             setLoading(t('LOADING_VIDEO'));
@@ -360,13 +357,13 @@ export default function Header({
             ffmpeg.FS(
                 'writeFile',
                 videoFileName,
-                await fetchFile(videoFile || 'sample.mp4'),
+                videoFile ? new Uint8Array(await videoFile.arrayBuffer()) : await fetch('sample.mp4').then(res => res.arrayBuffer()).then(buf => new Uint8Array(buf)),
             );
             
             setLoading(t('LOADING_SUB'));
             subtitleFileName = 'subtitle.ass';
             const subtitleContent = sub2ass(subtitle);
-            ffmpeg.FS('writeFile', subtitleFileName, await fetchFile(new File([subtitleContent], subtitleFileName)));
+            ffmpeg.FS('writeFile', subtitleFileName, new TextEncoder().encode(subtitleContent));
             setLoading('');
             notify({
                 message: t('BURN_START'),
