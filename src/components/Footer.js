@@ -150,7 +150,13 @@ const Waveform = memo(
 
         return <div className="waveform" ref={$waveform} />;
     },
-    () => true,
+    // 修改比较函数，当player或setRender变化时允许重渲染
+    (prevProps, nextProps) => {
+        if (prevProps.player !== nextProps.player) {
+            return false;
+        }
+        return true;
+    },
 );
 
 const Grab = (props) => {

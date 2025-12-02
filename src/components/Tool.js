@@ -444,10 +444,10 @@ export default function Header({
                     setVideoFile(file);
                     decodeAudioData(file);
                     const url = URL.createObjectURL(new Blob([file]));
-                    waveform.decoder.destroy();
-                    waveform.drawer.update();
                     waveform.seek(0);
                     player.currentTime = 0;
+                    waveform.decoder.destroy();
+                    waveform.drawer.update();
                     clearSubs();
                     setSubtitle([
                         newSub({
