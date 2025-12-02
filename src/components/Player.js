@@ -1,6 +1,6 @@
-import React, { useEffect, createRef, memo, useCallback} from 'react';
+import React, { useEffect, createRef, memo, useRef} from 'react';
 import styled from 'styled-components';
-import { isPlaying } from '../utils';
+import DPlayer from 'dplayer';
 
 const Style = styled.div`
     display: flex;
@@ -18,17 +18,6 @@ const Style = styled.div`
         width: auto;
         position: relative;
 
-        video {
-            position: relative;
-            z-index: 10;
-            outline: none;
-            max-height: 100%;
-            max-width: 100%;
-            box-shadow: 0px 5px 25px 5px rgb(0 0 0 / 80%);
-            background-color: #000;
-            cursor: pointer;
-        }
-
         .subtitle {
             display: flex;
             flex-direction: column;
@@ -38,7 +27,7 @@ const Style = styled.div`
             z-index: 20;
             left: 0;
             right: 0;
-            bottom: 5%;
+            bottom: 15%;
             width: 100%;
             padding: 0 20px;
             user-select: none;
@@ -76,31 +65,54 @@ const Style = styled.div`
 const VideoWrap = memo(
     ({ setPlayer, setCurrentTime, setPlaying }) => {
         const $video = createRef();
+        const playerRef = useRef(null);
 
         useEffect(() => {
-            setPlayer($video.current);
-            (function loop() {
-                window.requestAnimationFrame(() => {
-                    if ($video.current) {
-                        setPlaying(isPlaying($video.current));
-                        setCurrentTime($video.current.currentTime || 0);
-                    }
-                    loop();
+            if ($video.current) {
+                // 创建DPlayer实例
+                playerRef.current = new DPlayer({
+                    container: $video.current,
+                    video: {
+                        url: '/sample.mp4?t=1',
+                    },
+                    autoplay: false,
+                    controls: true, // 启用控制条
+                    mutex: true,
+                    volume: 0.5,
+                    // 自定义控制条显示设置
+                    playbackSpeed: [0.5, 0.75, 1, 1.25, 1.5, 2],
+                    screenshot: false,
+                    airplay: false,
+                    chromecast: false
                 });
-            })();
+
+                setPlayer(playerRef.current.video);
+
+                // 监听时间更新
+                playerRef.current.on('timeupdate', () => {
+                    setCurrentTime(playerRef.current.video.currentTime || 0);
+                    setPlaying(!playerRef.current.video.paused);
+                });
+
+                // 监听播放/暂停事件
+                playerRef.current.on('play', () => {
+                    setPlaying(true);
+                });
+
+                playerRef.current.on('pause', () => {
+                    setPlaying(false);
+                });
+            }
+
+            // 组件卸载时销毁播放器
+            return () => {
+                if (playerRef.current) {
+                    playerRef.current.destroy();
+                }
+            };
         }, [setPlayer, setCurrentTime, setPlaying, $video]);
 
-        const onClick = useCallback(() => {
-            if ($video.current) {
-                if (isPlaying($video.current)) {
-                    $video.current.pause();
-                } else {
-                    $video.current.play();
-                }
-            }
-        }, [$video]);
-
-        return <video onClick={onClick} src="/sample.mp4?t=1" ref={$video} />;
+        return <div ref={$video}></div>;
     },
     () => true,
 );

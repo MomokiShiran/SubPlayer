@@ -176,14 +176,14 @@ const Grab = (props) => {
 
     const onGrabMove = useCallback(
         (event) => {
-            if (grabbing && props.player && props.waveform) {
-                const currentTime = clamp(
-                    grabStartTime - ((event.pageX - grabStartX) / document.body.clientWidth) * 10,
-                    0,
-                    props.player.duration,
-                );
-                props.player.currentTime = currentTime;
-                props.waveform.seek(currentTime);
+            if (grabbing && props.player && props.waveform && isFinite(grabStartTime) && isFinite(props.player.duration)) {
+                const calculatedTime = grabStartTime - ((event.pageX - grabStartX) / document.body.clientWidth) * 10;
+                const currentTime = clamp(calculatedTime, 0, props.player.duration);
+                
+                if (isFinite(currentTime)) {
+                    props.player.currentTime = currentTime;
+                    props.waveform.seek(currentTime);
+                }
             }
         },
         [grabbing, props.player, props.waveform, grabStartX, grabStartTime],

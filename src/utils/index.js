@@ -26,7 +26,3 @@ export function getKeyCode(event) {
         return Number(event.keyCode);
     }
 }
-
-export function isPlaying($video) {
-    return !!($video.currentTime > 0 && !$video.paused && !$video.ended && $video.readyState > 2);
-}
