@@ -162,7 +162,6 @@ export default function Subtitles({ currentIndex, subtitle, checkSub, player, up
                     const isFocused = focusing && focusedIndex === props.index;
                     
                     const handleTextareaClick = (e) => {
-                        e.stopPropagation();
                         if (player) {
                             player.pause();
                         }
