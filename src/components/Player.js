@@ -1,6 +1,5 @@
 import React, { useEffect, createRef, memo, useCallback} from 'react';
 import styled from 'styled-components';
-import backlight from '../libs/backlight';
 import { isPlaying } from '../utils';
 
 const Style = styled.div`
@@ -108,13 +107,6 @@ const VideoWrap = memo(
 
 export default function Player(props) {
     const $player = createRef();
-
-    useEffect(() => {
-        if ($player.current && props.player && !backlight.state) {
-            backlight.state = true;
-            backlight($player.current, props.player);
-        }
-    }, [$player, props.player]);
 
     return (
         <Style className="player">
