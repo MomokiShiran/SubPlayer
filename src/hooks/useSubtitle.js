@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import isEqual from 'lodash/isEqual';
 import DT from 'duration-time-conversion';
 import Sub from '../libs/Sub';

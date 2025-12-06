@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { ReactNotifications, Store } from 'react-notifications-component';
+import { ReactNotifications } from 'react-notifications-component';
 import styled from 'styled-components';
 import Tool from './components/Tool';
 import Subtitles from './components/Subtitles';
@@ -53,7 +53,6 @@ export default function App({ defaultLang }) {
         newSub,
         hasSub,
         formatSub,
-        copySubs,
         setSubtitle,
         undoSubs,
         clearSubs,
@@ -65,25 +64,6 @@ export default function App({ defaultLang }) {
         splitSub,
     } = useSubtitle([]);
 
-    const notify = useCallback(
-        (obj) => {
-            // 使用react-notifications-component
-            Store.addNotification({
-                title: '',
-                message: obj.message,
-                type: obj.level || 'info',
-                insert: 'top',
-                container: 'top-center',
-                animationIn: ['fadeIn'],
-                animationOut: ['fadeOut'],
-                dismiss: {
-                    duration: 2000,
-                    showIcon: true
-                }
-            });
-        },
-        [],
-    );
 
     const onKeyDown = useCallback(
         (event) => {
@@ -167,7 +147,6 @@ export default function App({ defaultLang }) {
         setProcessing,
         subtitleHistory,
 
-        notify,
         newSub,
         hasSub,
         checkSub,

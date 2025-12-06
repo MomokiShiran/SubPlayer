@@ -8,6 +8,7 @@ import sub2ass from '../libs/readSub/sub2ass';
 import googleTranslate from '../libs/googleTranslate';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import SimpleFS from '@forlagshuset/simple-fs';
+import { handleError, handleSuccess, handleInfo } from '../utils/errorHandler';
 
 const Style = styled.div`
     display: flex;
@@ -251,7 +252,6 @@ export default function Header({
     formatSub,
     setSubtitle,
     setProcessing,
-    notify,
 }) {
     const [translate, setTranslate] = useState('en');
     const [videoFile, setVideoFile] = useState(null);
@@ -288,10 +288,7 @@ export default function Header({
                 ffmpeg.setProgress(({ ratio }) => setProcessing(ratio * 100));
                 ffmpeg.FS('writeFile', file.name, new Uint8Array(await file.arrayBuffer()));
                 setLoading('');
-                notify({
-                    message: t('DECODE_START'),
-                    level: 'info',
-                });
+                handleInfo(t('DECODE_START'));
                 await ffmpeg.run('-i', file.name, '-ac', '1', '-ar', '8000', output);
                 const uint8 = ffmpeg.FS('readFile', output);
                 // download(URL.createObjectURL(new Blob([uint8])), `${output}`);
@@ -299,17 +296,11 @@ export default function Header({
                 waveform.drawer.update();
                 setProcessing(0);
                 ffmpeg.setProgress(() => null);
-                notify({
-                    message: t('DECODE_SUCCESS'),
-                    level: 'success',
-                });
+                handleSuccess(t('DECODE_SUCCESS'));
             } catch (error) {
                 setLoading('');
                 setProcessing(0);
-                notify({
-                    message: t('DECODE_ERROR'),
-                    level: 'error',
-                });
+                handleError(error, t('DECODE_ERROR'));
             } finally {
                 if (ffmpeg) {
                     try {
@@ -325,7 +316,7 @@ export default function Header({
                 }
             }
         },
-        [waveform, notify, setProcessing, setLoading, getFFmpegInstance],
+        [waveform, setProcessing, setLoading, getFFmpegInstance],
     );
 
     const burnSubtitles = useCallback(async () => {
@@ -365,10 +356,7 @@ export default function Header({
             const subtitleContent = sub2ass(subtitle);
             ffmpeg.FS('writeFile', subtitleFileName, new TextEncoder().encode(subtitleContent));
             setLoading('');
-            notify({
-                message: t('BURN_START'),
-                level: 'info',
-            });
+            handleInfo(t('BURN_START'));
             
             output = `${Date.now()}.mp4`;
             await ffmpeg.run(
@@ -385,17 +373,11 @@ export default function Header({
             download(URL.createObjectURL(new Blob([uint8])), `${output}`);
             setProcessing(0);
             ffmpeg.setProgress(() => null);
-            notify({
-                message: t('BURN_SUCCESS'),
-                level: 'success',
-            });
+            handleSuccess(t('BURN_SUCCESS'));
         } catch (error) {
             setLoading('');
             setProcessing(0);
-            notify({
-                message: t('BURN_ERROR'),
-                level: 'error',
-            });
+            handleError(error, t('BURN_ERROR'));
         } finally {
             if (ffmpeg) {
                 try {
@@ -429,7 +411,7 @@ export default function Header({
                 }
             }
         }
-    }, [notify, setProcessing, setLoading, videoFile, subtitle, getFFmpegInstance]);
+    }, [setProcessing, setLoading, videoFile, subtitle, getFFmpegInstance]);
 
     const onVideoChange = useCallback(
         (event) => {
@@ -455,14 +437,11 @@ export default function Header({
                     ]);
                     player.src = url;
                 } else {
-                    notify({
-                        message: `${t('VIDEO_EXT_ERR')}: ${file.type || ext}`,
-                        level: 'error',
-                    });
+                    handleError(new Error(`Invalid video extension: ${file.type || ext}`), `${t('VIDEO_EXT_ERR')}: ${file.type || ext}`);
                 }
             }
         },
-        [newSub, notify, player, setSubtitle, waveform, clearSubs, decodeAudioData],
+        [newSub, player, setSubtitle, waveform, clearSubs, decodeAudioData],
     );
 
     const onSubtitleChange = useCallback(
@@ -477,20 +456,14 @@ export default function Header({
                             setSubtitle(res);
                         })
                         .catch((err) => {
-                            notify({
-                                message: err.message,
-                                level: 'error',
-                            });
+                            handleError(err, err.message);
                         });
                 } else {
-                    notify({
-                        message: `${t('SUB_EXT_ERR')}: ${ext}`,
-                        level: 'error',
-                    });
+                    handleError(new Error(`Invalid subtitle extension: ${ext}`), `${t('SUB_EXT_ERR')}: ${ext}`);
                 }
             }
         },
-        [notify, setSubtitle, clearSubs],
+        [setSubtitle, clearSubs],
     );
 
     const onInputClick = useCallback((event) => {
@@ -532,19 +505,13 @@ export default function Header({
             .then((res) => {
                 setLoading('');
                 setSubtitle(formatSub(res));
-                notify({
-                    message: t('TRANSLAT_SUCCESS'),
-                    level: 'success',
-                });
+                handleSuccess(t('TRANSLAT_SUCCESS'));
             })
             .catch((err) => {
                 setLoading('');
-                notify({
-                    message: err.message,
-                    level: 'error',
-                });
+                handleError(err, err.message);
             });
-    }, [subtitle, setLoading, formatSub, setSubtitle, translate, notify]);
+    }, [subtitle, setLoading, formatSub, setSubtitle, translate]);
 
     return (
         <Style className="tool">
