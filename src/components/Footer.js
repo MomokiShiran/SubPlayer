@@ -146,16 +146,13 @@ const Waveform = memo(
                     waveformRef.current = null;
                 }
             };
-        }, [player, $waveform, setWaveform, setRender, waveformRef]);
+        }, [player, setWaveform, setRender]);
 
         return <div className="waveform" ref={$waveform} />;
     },
-    // 修改比较函数，当player或setRender变化时允许重渲染
     (prevProps, nextProps) => {
-        if (prevProps.player !== nextProps.player) {
-            return false;
-        }
-        return true;
+        // 只有当player或setRender变化时才重渲染
+        return prevProps.player === nextProps.player && prevProps.setRender === nextProps.setRender;
     },
 );
 
